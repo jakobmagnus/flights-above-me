@@ -273,7 +273,7 @@ export default function FlightTracker() {
             </div>
 
             {/* Sidebar */}
-            <div className="bg-black p-5 overflow-y-auto max-h-[calc(100vh-55vh)] md:max-h-screen md:h-screen md:w-[380px] md:border-l md:border-gray-800 md:order-2">
+            <div className={`overflow-y-auto max-h-[calc(100vh-55vh)] md:max-h-screen md:h-screen md:w-[380px] md:border-l md:border-gray-800 md:order-2 ${selectedFlight ? 'bg-[#111]' : 'bg-black p-5'}`}>
                 {/* Header - only show when no flight selected */}
                 {!selectedFlight && (
                     <div className="flex justify-between items-center mb-5">
