@@ -1,12 +1,22 @@
 @import "tailwindcss";
 
+/* Enable class-based dark mode for Tailwind v4 (toggled by ThemeProvider on <html>) */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
     --font-family-mono: var(--font-roboto-mono);
 }
 
 :root {
+    --background: #ffffff;
+    --foreground: #111111;
+    --map-bg: #e5e7eb;
+}
+
+.dark {
     --background: #000000;
     --foreground: #ffffff;
+    --map-bg: #1e1e1e;
 }
 
 body {
@@ -19,7 +29,7 @@ body {
 .leaflet-container {
     width: 100% !important;
     height: 100% !important;
-    background-color: #1e1e1e;
+    background-color: var(--map-bg);
 }
 
 .leaflet-tile-pane {

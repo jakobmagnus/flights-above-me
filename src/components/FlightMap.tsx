@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Flight, FlightTrackPoint } from '@/types/flight';
+import { useTheme } from './ThemeProvider';
 
 interface FlightMapProps {
     userLat: number;
@@ -14,13 +15,25 @@ interface FlightMapProps {
     onBoundsChange?: (bounds: string) => void;
 }
 
+const DARK_TILES = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+const LIGHT_TILES = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+
 export default function FlightMap({ userLat, userLon, flights, onFlightSelect, selectedFlight, onBoundsChange }: FlightMapProps) {
     const mapRef = useRef<L.Map | null>(null);
+    const tileLayerRef = useRef<L.TileLayer | null>(null);
     const markersRef = useRef<Map<string, L.Marker>>(new Map()); // Changed to Map for efficient lookups
     const trailRef = useRef<L.Polyline | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [flightTrail, setFlightTrail] = useState<FlightTrackPoint[]>([]);
     const onBoundsChangeRef = useRef(onBoundsChange);
+    const { resolvedTheme } = useTheme();
+    const resolvedThemeRef = useRef(resolvedTheme);
+
+    // Keep resolvedTheme ref updated so the init effect can read the latest value
+    // without depending on it (which would otherwise tear down and rebuild the map).
+    useEffect(() => {
+        resolvedThemeRef.current = resolvedTheme;
+    }, [resolvedTheme]);
 
     // Keep the ref updated
     useEffect(() => {
@@ -140,10 +153,11 @@ export default function FlightMap({ userLat, userLon, flights, onFlightSelect, s
             zoomControl: true
         });
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        const tileLayer = L.tileLayer(resolvedThemeRef.current === 'light' ? LIGHT_TILES : DARK_TILES, {
             attribution: '&copy; OpenStreetMap &copy; CARTO',
             maxZoom: 19
         }).addTo(map);
+        tileLayerRef.current = tileLayer;
 
         L.circleMarker([userLat, userLon], {
             color: '#3388ff',
@@ -209,6 +223,13 @@ export default function FlightMap({ userLat, userLon, flights, onFlightSelect, s
             mapRef.current.setView([userLat, userLon], 10);
         }
     }, [userLat, userLon]);
+
+    // Swap tile layer URL when the resolved theme changes
+    useEffect(() => {
+        if (tileLayerRef.current) {
+            tileLayerRef.current.setUrl(resolvedTheme === 'light' ? LIGHT_TILES : DARK_TILES);
+        }
+    }, [resolvedTheme]);
 
     // Update markers when flights change - optimized with delta updates
     useEffect(() => {

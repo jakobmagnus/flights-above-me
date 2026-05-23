@@ -309,13 +309,13 @@ export default function FlightDetail({ flight, onClose }: FlightDetailProps) {
     };
 
     return (
-        <div className="bg-[#111] overflow-hidden flex flex-col min-h-full">
+        <div className="bg-gray-50 dark:bg-[#111] overflow-hidden flex flex-col min-h-full">
             {/* Header */}
-            <div className="bg-[#1a1a1a] px-5 py-4 flex items-center justify-between border-b border-gray-800">
+            <div className="bg-gray-100 dark:bg-[#1a1a1a] px-5 py-4 flex items-center justify-between border-b border-gray-300 dark:border-gray-800">
                 <div className="flex items-center gap-4">
                     <button
                         onClick={onClose}
-                        className="text-gray-400 hover:text-white transition-colors"
+                        className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
                         aria-label="Close flight details"
                     >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -323,8 +323,8 @@ export default function FlightDetail({ flight, onClose }: FlightDetailProps) {
                         </svg>
                     </button>
                     <div>
-                        <h2 className="text-lg font-semibold text-yellow-500">{flightNumber}</h2>
-                        <p className="text-sm text-gray-400">{airlineName}</p>
+                        <h2 className="text-lg font-semibold text-yellow-600 dark:text-yellow-500">{flightNumber}</h2>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{airlineName}</p>
                     </div>
                 </div>
             </div>
@@ -334,8 +334,8 @@ export default function FlightDetail({ flight, onClose }: FlightDetailProps) {
                 {/* Origin and Destination */}
                 <div className="flex justify-between items-start mb-6">
                     <div className="flex flex-col items-start">
-                        <span className="text-4xl font-light text-white mb-1">{originCode}</span>
-                        <span className="text-sm text-gray-400">{originCity}</span>
+                        <span className="text-4xl font-light text-gray-900 dark:text-white mb-1">{originCode}</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">{originCity}</span>
                         <span className="text-xs text-gray-500 mt-1">{originTimezone}</span>
                     </div>
 
@@ -348,15 +348,15 @@ export default function FlightDetail({ flight, onClose }: FlightDetailProps) {
                     </div>
 
                     <div className="flex flex-col items-end">
-                        <span className="text-4xl font-light text-white mb-1">{destCode}</span>
-                        <span className="text-sm text-gray-400">{destCity}</span>
+                        <span className="text-4xl font-light text-gray-900 dark:text-white mb-1">{destCode}</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">{destCity}</span>
                         <span className="text-xs text-gray-500 mt-1">{destTimezone}</span>
                     </div>
                 </div>
 
                 {/* Progress Bar */}
                 <div className="mb-4">
-                    <div className="relative h-[3px] bg-gray-700 rounded-full">
+                    <div className="relative h-[3px] bg-gray-300 dark:bg-gray-700 rounded-full">
                         <div
                             className="absolute left-0 h-full rounded-full transition-all duration-500"
                             style={{
@@ -368,14 +368,14 @@ export default function FlightDetail({ flight, onClose }: FlightDetailProps) {
                             className="absolute transition-all duration-500 flex items-center justify-center"
                             style={{ left: `${progress}%`, transform: 'translate(-50%, -50%)', top: '50%' }}
                         >
-                            <svg className="w-5 h-5 text-white drop-shadow-md rotate-90" fill="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-5 h-5 text-gray-900 dark:text-white drop-shadow-md rotate-90" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 00-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" />
                             </svg>
                         </div>
                     </div>
 
                     {/* Distance and Time Info */}
-                    <div className="flex justify-between mt-3 text-sm text-gray-400">
+                    <div className="flex justify-between mt-3 text-sm text-gray-600 dark:text-gray-400">
                         <span>
                             {flightData ? `${formatDistance(flightData.distanceFromOrigin)} km • ${flightData.timeFromOrigin}` : '---'}
                         </span>
@@ -386,15 +386,15 @@ export default function FlightDetail({ flight, onClose }: FlightDetailProps) {
                 </div>
 
                 {/* Schedule Info */}
-                <div className="border-t border-gray-800 pt-4 space-y-3">
+                <div className="border-t border-gray-300 dark:border-gray-800 pt-4 space-y-3">
                     <div className="flex justify-between items-center">
-                        <span className="text-gray-400 text-sm">Estimated Arrival</span>
-                        <span className="text-white font-medium text-lg">{formatEta(eta)}</span>
+                        <span className="text-gray-600 dark:text-gray-400 text-sm">Estimated Arrival</span>
+                        <span className="text-gray-900 dark:text-white font-medium text-lg">{formatEta(eta)}</span>
                     </div>
                     {eta && (
                         <div className="flex justify-between items-center">
-                            <span className="text-gray-400 text-sm">Time to arrival</span>
-                            <span className="text-green-400 font-medium">
+                            <span className="text-gray-600 dark:text-gray-400 text-sm">Time to arrival</span>
+                            <span className="text-green-600 dark:text-green-400 font-medium">
                                 {flightData ? flightData.timeToDestination : '---'}
                             </span>
                         </div>
@@ -402,60 +402,60 @@ export default function FlightDetail({ flight, onClose }: FlightDetailProps) {
                 </div>
 
                 {/* Flight Information */}
-                <div className="border-t border-gray-800 mt-4 pt-4">
+                <div className="border-t border-gray-300 dark:border-gray-800 mt-4 pt-4">
                     <h3 className="text-gray-500 text-sm mb-3 font-medium">Aircraft</h3>
                     <div className="grid grid-cols-2 gap-3">
-                        <div className="bg-[#1a1a1a] rounded-lg px-4 py-3">
-                            <span className="text-gray-400 text-xs block">Type</span>
-                            <span className="text-white text-sm font-medium">{aircraftType}</span>
+                        <div className="bg-gray-100 dark:bg-[#1a1a1a] rounded-lg px-4 py-3">
+                            <span className="text-gray-600 dark:text-gray-400 text-xs block">Type</span>
+                            <span className="text-gray-900 dark:text-white text-sm font-medium">{aircraftType}</span>
                         </div>
-                        <div className="bg-[#1a1a1a] rounded-lg px-4 py-3">
-                            <span className="text-gray-400 text-xs block">Registration</span>
-                            <span className="text-white text-sm font-medium">{registration}</span>
+                        <div className="bg-gray-100 dark:bg-[#1a1a1a] rounded-lg px-4 py-3">
+                            <span className="text-gray-600 dark:text-gray-400 text-xs block">Registration</span>
+                            <span className="text-gray-900 dark:text-white text-sm font-medium">{registration}</span>
                         </div>
-                        <div className="bg-[#1a1a1a] rounded-lg px-4 py-3 flex items-center gap-2">
+                        <div className="bg-gray-100 dark:bg-[#1a1a1a] rounded-lg px-4 py-3 flex items-center gap-2">
                             {airlineCountry && <span className="text-lg">{airlineCountry.flag}</span>}
                             <div>
-                                <span className="text-gray-400 text-xs block">Operator</span>
-                                <span className="text-white text-sm">{airlineName}</span>
+                                <span className="text-gray-600 dark:text-gray-400 text-xs block">Operator</span>
+                                <span className="text-gray-900 dark:text-white text-sm">{airlineName}</span>
                             </div>
                         </div>
-                        <div className="bg-[#1a1a1a] rounded-lg px-4 py-3">
-                            <span className="text-gray-400 text-xs block">Squawk</span>
-                            <span className="text-white text-sm font-medium">{squawk}</span>
+                        <div className="bg-gray-100 dark:bg-[#1a1a1a] rounded-lg px-4 py-3">
+                            <span className="text-gray-600 dark:text-gray-400 text-xs block">Squawk</span>
+                            <span className="text-gray-900 dark:text-white text-sm font-medium">{squawk}</span>
                         </div>
                     </div>
                 </div>
                 
                 {/* Speed and Position */}
-                <div className="border-t border-gray-800 mt-4 pt-4">
+                <div className="border-t border-gray-300 dark:border-gray-800 mt-4 pt-4">
                     <h3 className="text-gray-500 text-sm mb-3 font-medium">Position & Speed</h3>
                     <div className="grid grid-cols-2 gap-3">
-                        <div className="bg-[#1a1a1a] rounded-lg px-4 py-3">
-                            <span className="text-gray-400 text-xs block">Ground Speed</span>
-                            <span className="text-white text-sm font-medium">{groundSpeedKmh} km/h</span>
+                        <div className="bg-gray-100 dark:bg-[#1a1a1a] rounded-lg px-4 py-3">
+                            <span className="text-gray-600 dark:text-gray-400 text-xs block">Ground Speed</span>
+                            <span className="text-gray-900 dark:text-white text-sm font-medium">{groundSpeedKmh} km/h</span>
                             <span className="text-gray-500 text-xs block">{groundSpeedKnots} kts</span>
                         </div>
-                        <div className="bg-[#1a1a1a] rounded-lg px-4 py-3">
-                            <span className="text-gray-400 text-xs block">Altitude</span>
-                            <span className="text-white text-sm font-medium">{altitudeFormatted} m</span>
+                        <div className="bg-gray-100 dark:bg-[#1a1a1a] rounded-lg px-4 py-3">
+                            <span className="text-gray-600 dark:text-gray-400 text-xs block">Altitude</span>
+                            <span className="text-gray-900 dark:text-white text-sm font-medium">{altitudeFormatted} m</span>
                             <span className="text-gray-500 text-xs block">{altitudeFeet} ft</span>
                         </div>
-                        <div className="bg-[#1a1a1a] rounded-lg px-4 py-3">
-                            <span className="text-gray-400 text-xs block">Vertical Speed</span>
-                            <span className={`text-sm font-medium ${verticalSpeed > 0 ? 'text-green-400' : verticalSpeed < 0 ? 'text-orange-400' : 'text-white'}`}>
+                        <div className="bg-gray-100 dark:bg-[#1a1a1a] rounded-lg px-4 py-3">
+                            <span className="text-gray-600 dark:text-gray-400 text-xs block">Vertical Speed</span>
+                            <span className={`text-sm font-medium ${verticalSpeed > 0 ? 'text-green-600 dark:text-green-400' : verticalSpeed < 0 ? 'text-orange-600 dark:text-orange-400' : 'text-gray-900 dark:text-white'}`}>
                                 {formatVerticalSpeed(verticalSpeed)} ft/min
                             </span>
                         </div>
-                        <div className="bg-[#1a1a1a] rounded-lg px-4 py-3">
-                            <span className="text-gray-400 text-xs block">Heading</span>
-                            <span className="text-white text-sm font-medium">{heading}°</span>
+                        <div className="bg-gray-100 dark:bg-[#1a1a1a] rounded-lg px-4 py-3">
+                            <span className="text-gray-600 dark:text-gray-400 text-xs block">Heading</span>
+                            <span className="text-gray-900 dark:text-white text-sm font-medium">{heading}°</span>
                         </div>
                     </div>
                 </div>
                 
                 {/* Data Source */}
-                <div className="border-t border-gray-800 mt-4 pt-4">
+                <div className="border-t border-gray-300 dark:border-gray-800 mt-4 pt-4">
                     <div className="flex justify-between items-center text-xs text-gray-500">
                         <span>Source: {dataSource}</span>
                         <span>FR24 ID: {flight.fr24_id || flight.flight_id || '---'}</span>
