@@ -15,8 +15,21 @@ export const metadata: Metadata = {
 };
 
 // Inline script applies the saved theme (or system preference) before React hydrates,
-// preventing a flash of incorrect theme on first paint.
-const themeInitScript = `(function(){try{var s=localStorage.getItem('theme');var t=(s==='light'||s==='dark'||s==='system')?s:'system';var d=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);var r=document.documentElement;if(d){r.classList.add('dark');}r.style.colorScheme=d?'dark':'light';}catch(e){}})();`;
+// preventing a flash of incorrect theme on first paint. Kept compact (IIFE) since it
+// runs synchronously in <head> on every page load.
+const themeInitScript = `
+(function () {
+    try {
+        var stored = localStorage.getItem('theme');
+        var pref = (stored === 'light' || stored === 'dark' || stored === 'system') ? stored : 'system';
+        var isDark = pref === 'dark' ||
+            (pref === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        var root = document.documentElement;
+        if (isDark) root.classList.add('dark');
+        root.style.colorScheme = isDark ? 'dark' : 'light';
+    } catch (e) { /* ignore */ }
+})();
+`;
 
 export default function RootLayout({
     children,
