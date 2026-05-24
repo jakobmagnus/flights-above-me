@@ -327,7 +327,7 @@ export default function FlightDetail({ flight, onClose }: FlightDetailProps) {
     return (
         <div className="bg-white dark:bg-[#111] overflow-hidden flex flex-col min-h-full">
             {/* Header */}
-            <div className="bg-gray-100 dark:bg-[#1a1a1a] px-5 py-2 flex items-center justify-between border-b border-gray-300 dark:border-gray-800">
+            <div className="bg-gray-100 dark:bg-[#1a1a1a] px-5 py-4 flex items-center justify-between border-b border-gray-300 dark:border-gray-800">
                 <button
                     onClick={onClose}
                     className="flex items-center gap-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
