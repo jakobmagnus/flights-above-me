@@ -37,13 +37,16 @@ function isFlightValid(flight: Flight): boolean {
     const flightNumber = normalizeValue(rawFlightNumber);
     const originCode = normalizeValue(rawOriginCode);
     const destCode = normalizeValue(rawDestCode);
-    
-    // Filter out flights with N/A, ---, or missing essential fields
-    return !(
-        isInvalidPlaceholder(flightNumber) ||
-        isInvalidPlaceholder(originCode) ||
-        isInvalidPlaceholder(destCode)
-    );
+
+    // A valid flight must at least have a usable callsign/flight number.
+    // Origin and destination airports are optional: free flight-data
+    // providers (adsb.lol, OpenSky) don't supply them, and the UI renders
+    // those fields as optional. Only reject flights when origin/dest are
+    // present but contain explicit placeholder values like "N/A" or "---".
+    if (isInvalidPlaceholder(flightNumber)) return false;
+    if (rawOriginCode && isInvalidPlaceholder(originCode)) return false;
+    if (rawDestCode && isInvalidPlaceholder(destCode)) return false;
+    return true;
 }
 
 export default function FlightTracker() {
