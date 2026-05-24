@@ -326,7 +326,7 @@ export default function FlightTracker() {
                     <div className="absolute bottom-0 left-0 right-0 pointer-events-none">
                         {/* Gradient fade above the buttons for visibility over the card stack */}
                         <div className="h-8 bg-gradient-to-b from-transparent to-gray-100 dark:to-black" />
-                        <div className="flex justify-center items-center gap-2 px-5 pb-5 pt-2 bg-gray-100 dark:bg-black pointer-events-auto">
+                        <div className="flex justify-start items-center gap-2 px-5 pb-5 pt-2 bg-gray-100 dark:bg-black pointer-events-auto">
                             <button
                                 onClick={updateLocation}
                                 className="flex items-center gap-2 bg-transparent border border-gray-300 dark:border-gray-700 rounded-full px-4 py-2 text-gray-900 dark:text-white text-sm hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors"
