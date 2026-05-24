@@ -25,7 +25,7 @@ const themeInitScript = `
         var isDark = pref === 'dark' ||
             (pref === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
         var root = document.documentElement;
-        if (isDark) root.classList.add('dark');
+        root.classList.toggle('dark', isDark);
         root.style.colorScheme = isDark ? 'dark' : 'light';
     } catch (e) { /* ignore */ }
 })();
