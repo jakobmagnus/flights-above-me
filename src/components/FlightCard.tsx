@@ -90,13 +90,13 @@ function FlightCard({ flight, onClick }: FlightCardProps) {
     return (
         <button 
             type="button"
-            className="bg-[#111] rounded-2xl p-5 flex flex-col gap-6 shadow-lg w-full text-left cursor-pointer hover:bg-[#1a1a1a] transition-colors"
+            className="bg-white dark:bg-[#111] rounded-2xl p-5 flex flex-col gap-6 w-full text-left cursor-pointer hover:bg-gray-100 dark:hover:bg-[#1a1a1a] transition-colors"
             onClick={onClick}
         >
             {/* Card Header */}
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center overflow-hidden border border-gray-700 ${logoLoaded ? 'bg-white' : 'bg-gray-800'}`}>
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center overflow-hidden border border-gray-300 dark:border-gray-700 ${logoLoaded ? 'bg-white' : 'bg-gray-200 dark:bg-gray-800'}`}>
                         {logoUrl && !logoError ? (
                             <img
                                 src={logoUrl}
@@ -119,14 +119,14 @@ function FlightCard({ flight, onClick }: FlightCardProps) {
                             </svg>
                         )}
                     </div>
-                    <span className="text-base font-medium tracking-wide text-gray-100">{flightNumber}</span>
+                    <span className="text-base font-medium tracking-wide text-gray-900 dark:text-gray-100">{flightNumber}</span>
                 </div>
                 <div className="flex gap-2">
-                    <span className="bg-[#222] px-3 py-1.5 rounded-xl text-xs font-medium text-gray-300 font-mono">
+                    <span className="bg-gray-200 dark:bg-[#222] px-3 py-1.5 rounded-xl text-xs font-medium text-gray-700 dark:text-gray-300 font-mono">
                         {altitude.toLocaleString()} ft
                     </span>
                     {aircraftType && (
-                        <span className="bg-[#222] px-3 py-1.5 rounded-xl text-xs font-medium text-gray-300 font-mono">
+                        <span className="bg-gray-200 dark:bg-[#222] px-3 py-1.5 rounded-xl text-xs font-medium text-gray-700 dark:text-gray-300 font-mono">
                             {aircraftType}
                         </span>
                     )}
@@ -136,12 +136,12 @@ function FlightCard({ flight, onClick }: FlightCardProps) {
             {/* Route Info */}
             <div className="flex justify-between items-center">
                 <div className="flex flex-col">
-                    <span className="text-sm text-gray-400 mb-1">{originCity}</span>
-                    <span className="text-3xl md:text-4xl font-light tracking-wide text-white">{originCode}</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400 mb-1">{originCity}</span>
+                    <span className="text-3xl md:text-4xl font-light tracking-wide text-gray-900 dark:text-white">{originCode}</span>
                 </div>
 
                 <div className="flex-1 flex items-center justify-center mx-5 relative h-6 self-end mb-2">
-                    <div className="w-full h-[3px] bg-gray-600 relative flex items-center">
+                    <div className="w-full h-[3px] bg-gray-400 dark:bg-gray-600 relative flex items-center">
                         {/* Progress bar with gradient from red-orange to yellow */}
                         <div 
                             className="absolute left-0 h-[3px] transition-all duration-500"
@@ -156,7 +156,7 @@ function FlightCard({ flight, onClick }: FlightCardProps) {
                             style={{ left: `${progress}%`, transform: 'translateX(-50%)' }}
                         >
                             <svg 
-                                className="w-5 h-5 text-white drop-shadow-md rotate-90" 
+                                className="w-5 h-5 text-gray-900 dark:text-white drop-shadow-md rotate-90" 
                                 fill="currentColor" 
                                 viewBox="0 0 24 24"
                             >
@@ -167,8 +167,8 @@ function FlightCard({ flight, onClick }: FlightCardProps) {
                 </div>
 
                 <div className="flex flex-col items-end">
-                    <span className="text-sm text-gray-400 mb-1">{destCity}</span>
-                    <span className="text-3xl md:text-4xl font-light tracking-wide text-white">{destCode}</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400 mb-1">{destCity}</span>
+                    <span className="text-3xl md:text-4xl font-light tracking-wide text-gray-900 dark:text-white">{destCode}</span>
                 </div>
             </div>
         </button>
