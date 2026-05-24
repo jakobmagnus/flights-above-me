@@ -7,16 +7,36 @@
     --font-family-mono: var(--font-roboto-mono);
 }
 
+/* ---------------------------------------------------------------------------
+ * Material Design 3 inspired token system
+ *
+ * Two layers of tokens:
+ *   1. Primitive (palette) tokens — raw hex color values. These are the only
+ *      place hex literals are allowed.
+ *   2. Semantic tokens — describe the role of a color in the UI and reference
+ *      primitive tokens via var(). Themes (light/dark) remap semantic tokens
+ *      to different primitives; primitives themselves never change per theme.
+ * ------------------------------------------------------------------------- */
+
 :root {
-    --background: #ffffff;
-    --foreground: #111111;
-    --map-bg: #e5e7eb;
+    /* Primitive colors (palette) */
+    --palette-white: #ffffff;
+    --palette-black: #000000;
+    --palette-neutral-10: #111111;
+    --palette-neutral-20: #1e1e1e;
+    --palette-neutral-90: #e5e7eb;
+
+    /* Semantic colors — light theme */
+    --background: var(--palette-white);
+    --foreground: var(--palette-neutral-10);
+    --map-bg: var(--palette-neutral-90);
 }
 
 .dark {
-    --background: #000000;
-    --foreground: #ffffff;
-    --map-bg: #1e1e1e;
+    /* Semantic colors — dark theme */
+    --background: var(--palette-black);
+    --foreground: var(--palette-white);
+    --map-bg: var(--palette-neutral-20);
 }
 
 body {
