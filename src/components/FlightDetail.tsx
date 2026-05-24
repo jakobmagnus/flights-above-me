@@ -194,6 +194,7 @@ function estimateTime(distanceKm: number, speedKmh: number): string {
 export default function FlightDetail({ flight, onClose }: FlightDetailProps) {
     const [logoLoaded, setLogoLoaded] = useState(false);
     const [logoError, setLogoError] = useState(false);
+    const [prevLogoUrl, setPrevLogoUrl] = useState<string | null>(null);
     // Extract flight information from FR24 API response
     const flightNumber = flight.flight || flight.callsign || flight.flight_number || 'N/A';
     const originCode = flight.orig_iata || flight.origin_airport_iata || '---';
@@ -251,6 +252,13 @@ export default function FlightDetail({ flight, onClose }: FlightDetailProps) {
             ? `https://pics.avs.io/200/200/${airlineCode}.png`
             : `https://www.flightaware.com/images/airline_logos/90p/${airlineCode}.png`
         : null;
+
+    // Reset logo loading state when the logo URL changes (e.g. switching flights)
+    if (prevLogoUrl !== logoUrl) {
+        setPrevLogoUrl(logoUrl);
+        setLogoLoaded(false);
+        setLogoError(false);
+    }
 
     // Calculate coordinates
     const currentLat = flight.lat ?? flight.latitude ?? 0;
