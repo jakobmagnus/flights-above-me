@@ -309,7 +309,7 @@ export default function FlightDetail({ flight, onClose }: FlightDetailProps) {
     };
 
     return (
-        <div className="bg-gray-50 dark:bg-[#111] overflow-hidden flex flex-col min-h-full">
+        <div className="bg-white dark:bg-[#111] overflow-hidden flex flex-col min-h-full">
             {/* Header */}
             <div className="bg-gray-100 dark:bg-[#1a1a1a] px-5 py-4 flex items-center justify-between border-b border-gray-300 dark:border-gray-800">
                 <div className="flex items-center gap-4">
