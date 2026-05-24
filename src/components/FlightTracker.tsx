@@ -328,7 +328,7 @@ export default function FlightTracker() {
                         ))}
 
                         {/* Theme toggle below the card stack */}
-                        <div className="flex justify-center mt-2 mb-2">
+                        <div className="flex justify-center my-2">
                             <ThemeToggle />
                         </div>
                     </div>
