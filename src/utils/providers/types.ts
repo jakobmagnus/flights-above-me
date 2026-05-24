@@ -1,13 +1,8 @@
 import { Flight, FlightTrackResponse } from '@/types/flight';
 import type { AirportInfo } from '@/utils/airportInfo';
 
-/**
- * Identifier for the flight-data provider in use.
- * - `fr24`: Flightradar24 commercial API (requires FLIGHTRADAR24_API_KEY)
- * - `adsblol`: Free community ADS-B aggregator (api.adsb.lol)
- * - `opensky`: Free OpenSky Network REST API
- */
-export type ProviderId = 'fr24' | 'adsblol' | 'opensky';
+/** Identifier for the flight-data provider in use. */
+export type ProviderId = 'adsblol';
 
 /**
  * Bounding box in the format used throughout the app: "north,south,west,east".
@@ -20,9 +15,10 @@ export interface BoundsBox {
 }
 
 /**
- * Abstraction over upstream flight-data sources. Implementations may delegate
- * to commercial APIs (Flightradar24) or free community datasets (adsb.lol,
- * OpenSky). The route handlers depend only on this interface.
+ * Abstraction over the upstream flight-data source. Currently the app ships a
+ * single implementation backed by the free community ADS-B aggregator at
+ * api.adsb.lol; the interface is kept so additional providers can be added
+ * later without touching the route handlers.
  */
 export interface FlightProvider {
     /** Stable identifier for logging and feature detection. */

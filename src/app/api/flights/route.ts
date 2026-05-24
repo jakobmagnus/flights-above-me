@@ -46,8 +46,8 @@ export async function GET(request: NextRequest) {
 
     try {
         const flights = await provider.getFlightsInBounds(parsedBounds);
-        // Build up an in-memory trail history for providers without a native
-        // trail endpoint (adsb.lol, OpenSky). Cheap no-op for FR24.
+        // Build up an in-memory trail history since adsb.lol has no native
+        // trail endpoint.
         if (!provider.supportsTrails) {
             recordTrailPositions(flights);
         }

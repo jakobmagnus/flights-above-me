@@ -35,8 +35,8 @@ export async function GET(
         }
     }
 
-    // Providers without native trail support (adsb.lol, OpenSky) fall back to
-    // the in-memory positional cache populated from successive bounds polls.
+    // adsb.lol has no native trail endpoint; fall back to the in-memory
+    // positional cache populated from successive bounds polls.
     const cached = getCachedTrail(flightId);
     if (cached) {
         return NextResponse.json(cached);
