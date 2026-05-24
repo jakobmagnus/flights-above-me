@@ -280,7 +280,6 @@ export default function FlightTracker() {
                     <div className="flex justify-between items-center mb-5 gap-3">
                         <h1 className="text-2xl md:text-[28px] font-bold text-gray-900 dark:text-white truncate">{locationName}</h1>
                         <div className="flex items-center gap-2 shrink-0">
-                            <ThemeToggle />
                             <button
                                 onClick={updateLocation}
                                 className="flex items-center gap-2 bg-transparent border border-gray-300 dark:border-gray-700 rounded-full px-4 py-2 text-gray-900 dark:text-white text-sm hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors"
@@ -327,6 +326,11 @@ export default function FlightTracker() {
                                 onClick={() => handleFlightSelect(flight)}
                             />
                         ))}
+
+                        {/* Theme toggle below the card stack */}
+                        <div className="flex justify-center mt-2 mb-2">
+                            <ThemeToggle />
+                        </div>
                     </div>
                 )}
             </div>
