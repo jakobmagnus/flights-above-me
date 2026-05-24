@@ -373,7 +373,7 @@ export default function FlightDetail({ flight, onClose }: FlightDetailProps) {
                 {/* Origin and Destination */}
                 <div className="flex justify-between items-start mb-6">
                     <div className="flex flex-col items-start">
-                        <span className="text-4xl font-light text-gray-900 dark:text-white mb-1">{originCode}</span>
+                        <span className="text-4xl font-bold text-gray-900 dark:text-white mb-1">{originCode}</span>
                         <span className="text-sm text-gray-600 dark:text-gray-400">{originCity}</span>
                         <span className="text-xs text-gray-500 mt-1">{originTimezone}</span>
                     </div>
@@ -387,7 +387,7 @@ export default function FlightDetail({ flight, onClose }: FlightDetailProps) {
                     </div>
 
                     <div className="flex flex-col items-end">
-                        <span className="text-4xl font-light text-gray-900 dark:text-white mb-1">{destCode}</span>
+                        <span className="text-4xl font-bold text-gray-900 dark:text-white mb-1">{destCode}</span>
                         <span className="text-sm text-gray-600 dark:text-gray-400">{destCity}</span>
                         <span className="text-xs text-gray-500 mt-1">{destTimezone}</span>
                     </div>
