@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Flight } from '@/types/flight';
 import { calculateFlightProgress } from '@/utils/flightProgress';
 import { getAirportCoordinates } from '@/utils/airportCoordinates';
@@ -192,6 +192,9 @@ function estimateTime(distanceKm: number, speedKmh: number): string {
 }
 
 export default function FlightDetail({ flight, onClose }: FlightDetailProps) {
+    const [logoLoaded, setLogoLoaded] = useState(false);
+    const [logoError, setLogoError] = useState(false);
+    const [prevLogoUrl, setPrevLogoUrl] = useState<string | null>(null);
     // Extract flight information from FR24 API response
     const flightNumber = flight.flight || flight.callsign || flight.flight_number || 'N/A';
     const originCode = flight.orig_iata || flight.origin_airport_iata || '---';
@@ -243,6 +246,19 @@ export default function FlightDetail({ flight, onClose }: FlightDetailProps) {
 
     const airlineName = airlineCode ? AIRLINE_NAMES[airlineCode] || airlineCode : 'Unknown Airline';
     const airlineCountry = airlineCode ? AIRLINE_COUNTRIES[airlineCode] : null;
+
+    const logoUrl = airlineCode
+        ? airlineCode.length === 2
+            ? `https://pics.avs.io/200/200/${airlineCode}.png`
+            : `https://www.flightaware.com/images/airline_logos/90p/${airlineCode}.png`
+        : null;
+
+    // Reset logo loading state when the logo URL changes (e.g. switching flights)
+    if (prevLogoUrl !== logoUrl) {
+        setPrevLogoUrl(logoUrl);
+        setLogoLoaded(false);
+        setLogoError(false);
+    }
 
     // Calculate coordinates
     const currentLat = flight.lat ?? flight.latitude ?? 0;
@@ -312,29 +328,52 @@ export default function FlightDetail({ flight, onClose }: FlightDetailProps) {
         <div className="bg-white dark:bg-[#111] overflow-hidden flex flex-col min-h-full">
             {/* Header */}
             <div className="bg-gray-100 dark:bg-[#1a1a1a] px-5 py-4 flex items-center justify-between border-b border-gray-300 dark:border-gray-800">
-                <div className="flex items-center gap-4">
-                    <button
-                        onClick={onClose}
-                        className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
-                        aria-label="Close flight details"
-                    >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
-                    </button>
-                    <div>
-                        <h2 className="text-lg font-semibold text-yellow-600 dark:text-yellow-500">{flightNumber}</h2>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">{airlineName}</p>
-                    </div>
-                </div>
+                <button
+                    onClick={onClose}
+                    className="flex items-center gap-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
+                    aria-label="Back"
+                >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                    <span className="text-sm font-medium">Back</span>
+                </button>
             </div>
 
             {/* Route Display */}
             <div className="px-5 py-6">
+                {/* Flight number and airline logo */}
+                <div className="flex items-center gap-3 mb-4">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center overflow-hidden border border-gray-300 dark:border-gray-700 ${logoLoaded ? 'bg-white' : 'bg-gray-200 dark:bg-gray-800'}`}>
+                        {logoUrl && !logoError ? (
+                            <img
+                                src={logoUrl}
+                                alt={`${airlineName} logo`}
+                                className={`w-full h-full object-contain p-0.5 ${logoLoaded ? 'block' : 'hidden'}`}
+                                onLoad={(e) => {
+                                    const img = e.target as HTMLImageElement;
+                                    if (img.naturalWidth > 10 && img.naturalHeight > 10) {
+                                        setLogoLoaded(true);
+                                    } else {
+                                        setLogoError(true);
+                                    }
+                                }}
+                                onError={() => setLogoError(true)}
+                            />
+                        ) : null}
+                        {(!logoUrl || logoError || !logoLoaded) && (
+                            <svg className="w-4 h-4 text-orange-500" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 00-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" />
+                            </svg>
+                        )}
+                    </div>
+                    <span className="text-base font-semibold text-yellow-600 dark:text-yellow-500">{flightNumber}</span>
+                </div>
+
                 {/* Origin and Destination */}
                 <div className="flex justify-between items-start mb-6">
                     <div className="flex flex-col items-start">
-                        <span className="text-4xl font-light text-gray-900 dark:text-white mb-1">{originCode}</span>
+                        <span className="text-4xl font-bold text-gray-900 dark:text-white mb-1">{originCode}</span>
                         <span className="text-sm text-gray-600 dark:text-gray-400">{originCity}</span>
                         <span className="text-xs text-gray-500 mt-1">{originTimezone}</span>
                     </div>
@@ -348,7 +387,7 @@ export default function FlightDetail({ flight, onClose }: FlightDetailProps) {
                     </div>
 
                     <div className="flex flex-col items-end">
-                        <span className="text-4xl font-light text-gray-900 dark:text-white mb-1">{destCode}</span>
+                        <span className="text-4xl font-bold text-gray-900 dark:text-white mb-1">{destCode}</span>
                         <span className="text-sm text-gray-600 dark:text-gray-400">{destCity}</span>
                         <span className="text-xs text-gray-500 mt-1">{destTimezone}</span>
                     </div>
