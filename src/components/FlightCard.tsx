@@ -90,7 +90,7 @@ function FlightCard({ flight, onClick }: FlightCardProps) {
     return (
         <button 
             type="button"
-            className="bg-gray-100 dark:bg-[#111] rounded-2xl p-5 flex flex-col gap-6 w-full text-left cursor-pointer hover:bg-gray-200 dark:hover:bg-[#1a1a1a] transition-colors"
+            className="bg-white dark:bg-[#111] rounded-2xl p-5 flex flex-col gap-6 w-full text-left cursor-pointer hover:bg-gray-100 dark:hover:bg-[#1a1a1a] transition-colors"
             onClick={onClick}
         >
             {/* Card Header */}
