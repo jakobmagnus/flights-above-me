@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import FlightCard from './FlightCard';
 import FlightDetail from './FlightDetail';
@@ -259,6 +259,39 @@ export default function FlightTracker() {
         }
     }, [mapBounds, fetchFlights]);
 
+    // Filter flights to only those visible within the current map bounds.
+    // The API (and mock data) can return flights outside the current view,
+    // so we narrow the list to match what's actually shown on the map.
+    const visibleFlights = useMemo(() => {
+        if (!mapBounds) {
+            return flights;
+        }
+
+        const parts = mapBounds.split(',').map(Number);
+        if (parts.length !== 4 || parts.some((n) => Number.isNaN(n))) {
+            return flights;
+        }
+        // Order matches the bounds string emitted by FlightMap: "north,south,west,east".
+        const [north, south, west, east] = parts;
+
+        // Handle bounds that cross the antimeridian (west > east)
+        const lonInBounds = (lon: number): boolean => {
+            if (west <= east) {
+                return lon >= west && lon <= east;
+            }
+            return lon >= west || lon <= east;
+        };
+
+        return flights.filter((flight) => {
+            const lat = flight.lat ?? flight.latitude;
+            const lon = flight.lon ?? flight.longitude;
+            if (lat == null || lon == null) {
+                return false;
+            }
+            return lat >= south && lat <= north && lonInBounds(lon);
+        });
+    }, [flights, mapBounds]);
+
     return (
         <div className="w-full h-screen grid grid-rows-[55vh_1fr] md:grid-rows-1 md:grid-cols-[1fr_380px] overflow-hidden">
             {/* Map View */}
@@ -266,7 +299,7 @@ export default function FlightTracker() {
                 <FlightMap 
                     userLat={userLat} 
                     userLon={userLon} 
-                    flights={flights}
+                    flights={visibleFlights}
                     onFlightSelect={handleFlightSelect}
                     selectedFlight={selectedFlight}
                     onBoundsChange={handleBoundsChange}
@@ -304,13 +337,13 @@ export default function FlightTracker() {
                                 </div>
                             )}
 
-                            {!loading && !error && flights.length === 0 && (
+                            {!loading && !error && visibleFlights.length === 0 && (
                                 <div className="text-center text-gray-500 py-10">
                                     No flights found in this area.
                                 </div>
                             )}
 
-                            {!loading && !error && flights.map((flight, index) => (
+                            {!loading && !error && visibleFlights.map((flight, index) => (
                                 <FlightCard
                                     key={flight.flight_id || index}
                                     flight={flight}
