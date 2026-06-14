@@ -30,6 +30,7 @@ const NEGATIVE_TTL_MS = 60 * 60 * 1000;       // 1h
 const MAX_ENTRIES = 5000;
 const ROUTESET_URL = 'https://api.adsb.lol/api/0/routeset';
 const ROUTESET_BATCH_SIZE = 100;
+const ROUTESET_TIMEOUT_MS = 4500;
 
 const cache = new Map<string, CacheEntry>();
 
@@ -86,11 +87,15 @@ interface RoutesetAirport {
 
 interface RoutesetResultEntry {
     callsign?: string;
-    airline_code_icao?: string;
-    airline_code_iata?: string;
+    /** ICAO airline designator, e.g. "SAS". */
+    airline_code?: string;
+    /** "ICAO-ICAO" airport pair, or "unknown". */
     airport_codes?: string;
+    /** "IATA-IATA" airport pair (server-derived), or "unknown". */
     _airport_codes_iata?: string;
+    /** Resolved airport records, in route order. */
     _airports?: RoutesetAirport[];
+    plausible?: boolean | number;
 }
 
 function parseRouteResult(entry: RoutesetResultEntry): RouteInfo | null {
@@ -99,26 +104,41 @@ function parseRouteResult(entry: RoutesetResultEntry): RouteInfo | null {
     if (!codes || codes === 'unknown') return null;
 
     const info: RouteInfo = {};
-    const airports = Array.isArray(entry._airports) ? entry._airports : [];
+
+    // Primary source: ICAO codes from `airport_codes` ("ICAO-ICAO").
     const [origIcao, destIcao] = codes.split('-');
     if (origIcao) info.orig_icao = origIcao;
     if (destIcao) info.dest_icao = destIcao;
 
+    // IATA codes from the server-derived `_airport_codes_iata` ("IATA-IATA"),
+    // used as a fallback when `_airports` records are unavailable.
+    const iataCodes = entry._airport_codes_iata;
+    if (iataCodes && iataCodes !== 'unknown') {
+        const [origIata, destIata] = iataCodes.split('-');
+        // Only treat as IATA if it actually differs from the ICAO form (3 chars).
+        if (origIata && origIata.length === 3) info.orig_iata = origIata;
+        if (destIata && destIata.length === 3) info.dest_iata = destIata;
+    }
+
+    // Most reliable: the resolved airport records (have both iata + icao).
+    const airports = Array.isArray(entry._airports) ? entry._airports : [];
     if (airports.length >= 1 && airports[0]) {
         info.orig_iata = airports[0].iata || info.orig_iata;
         info.orig_icao = airports[0].icao || info.orig_icao;
     }
-    if (airports.length >= 2 && airports[1]) {
-        info.dest_iata = airports[1].iata || info.dest_iata;
-        info.dest_icao = airports[1].icao || info.dest_icao;
+    if (airports.length >= 2 && airports[airports.length - 1]) {
+        const last = airports[airports.length - 1];
+        info.dest_iata = last.iata || info.dest_iata;
+        info.dest_icao = last.icao || info.dest_icao;
     }
 
     if (!info.orig_iata && !info.dest_iata && !info.orig_icao && !info.dest_icao) {
         return null;
     }
 
-    if (entry.airline_code_icao) info.airline_icao = entry.airline_code_icao;
-    if (entry.airline_code_iata) info.airline_iata = entry.airline_code_iata;
+    if (entry.airline_code && entry.airline_code !== 'unknown') {
+        info.airline_icao = entry.airline_code;
+    }
     return info;
 }
 
@@ -126,20 +146,37 @@ async function fetchRoutesetBatch(planes: RoutesetPlane[]): Promise<Map<string, 
     const result = new Map<string, RouteInfo | null>();
     if (planes.length === 0) return result;
 
+    // Bound the request so a slow routeset response never stalls /api/flights.
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), ROUTESET_TIMEOUT_MS);
+
     let res: Response;
     try {
         res = await fetch(ROUTESET_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'User-Agent': 'flights-above-me/1.0 (+https://github.com/jakobmagnus/flights-above-me)',
+            },
             body: JSON.stringify({ planes }),
-            // Routes change rarely; allow Next.js to dedupe identical requests briefly.
-            next: { revalidate: 60 },
+            // We maintain our own route cache, so don't let the framework cache
+            // this POST (POST + Next.js data cache is unsupported and can error).
+            cache: 'no-store',
+            signal: controller.signal,
         });
-    } catch {
-        // Network failure: leave the result empty so callers fall back gracefully.
+    } catch (err) {
+        // Network failure / timeout: leave the result empty so callers fall
+        // back gracefully without failing the whole flights request.
+        console.warn('[routeCache] routeset request failed:', err instanceof Error ? err.message : err);
+        return result;
+    } finally {
+        clearTimeout(timeout);
+    }
+    if (!res.ok) {
+        console.warn(`[routeCache] routeset responded ${res.status}`);
         return result;
     }
-    if (!res.ok) return result;
 
     let data: unknown;
     try {
@@ -147,8 +184,8 @@ async function fetchRoutesetBatch(planes: RoutesetPlane[]): Promise<Map<string, 
     } catch {
         return result;
     }
-    // adsb.lol returns an array aligned with the input planes (or an object
-    // with `routes`/`response` wrapping it in older versions). Be liberal.
+    // adsb.lol returns a bare JSON array (one entry per requested plane). Some
+    // older/proxied deployments wrap it in `{ response: [...] }`; accept both.
     const list: RoutesetResultEntry[] = Array.isArray(data)
         ? data as RoutesetResultEntry[]
         : Array.isArray((data as { response?: unknown }).response)
