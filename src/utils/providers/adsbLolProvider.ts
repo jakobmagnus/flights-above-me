@@ -1,6 +1,7 @@
 import { Flight, FlightTrackResponse } from '@/types/flight';
 import type { AirportInfo } from '@/utils/airportInfo';
 import { lookupAirlineFromCallsign } from './airlineCodes';
+import { lookupRoutes, RouteInfo } from './routeCache';
 import {
     BoundsBox,
     FlightProvider,
@@ -45,7 +46,8 @@ interface AdsbLolResponse {
  *
  * Trade-offs vs FR24:
  * - No historical trail endpoint (a per-route in-memory cache fills the gap).
- * - No origin/destination metadata; the UI must render these as optional.
+ * - Origin/destination metadata is enriched via a secondary routeset lookup
+ *   (community DB; coverage is best for scheduled commercial flights).
  * - Coverage is crowdsourced and weaker over oceans / remote areas.
  */
 export class AdsbLolProvider implements FlightProvider {
@@ -75,13 +77,21 @@ export class AdsbLolProvider implements FlightProvider {
         const aircraft = Array.isArray(data.ac) ? data.ac : [];
         const nowIso = new Date().toISOString();
 
-        return aircraft
+        const flights = aircraft
             .filter(ac =>
                 typeof ac.lat === 'number' &&
                 typeof ac.lon === 'number' &&
                 isInsideBounds(ac.lat, ac.lon, bounds),
             )
             .map(ac => mapAircraftToFlight(ac, nowIso));
+
+        // Enrich with origin/destination via adsb.lol's routeset endpoint.
+        // adsb.lol's /v2/point feed lacks route info, so we look it up by
+        // callsign and merge the results in. Best-effort: any failure leaves
+        // the flights unenriched rather than failing the whole request.
+        await enrichWithRoutes(flights);
+
+        return flights;
     }
 
     async getFlightTrail(): Promise<FlightTrackResponse | null> {
@@ -187,4 +197,43 @@ function mapAircraftToFlight(ac: AdsbLolAircraft, nowIso: string): Flight {
     };
 
     return flight;
+}
+
+/**
+ * Mutate `flights` in-place to add origin/destination IATA/ICAO codes from
+ * adsb.lol's routeset endpoint, keyed by callsign. Existing values on a
+ * Flight are preserved; only missing fields are filled in.
+ */
+async function enrichWithRoutes(flights: Flight[]): Promise<void> {
+    const positions = new Map<string, { lat: number; lon: number }>();
+    for (const f of flights) {
+        const cs = f.callsign?.trim();
+        if (!cs) continue;
+        if (positions.has(cs)) continue;
+        const lat = typeof f.lat === 'number' ? f.lat : 0;
+        const lon = typeof f.lon === 'number' ? f.lon : 0;
+        positions.set(cs, { lat, lon });
+    }
+    if (positions.size === 0) return;
+
+    let routes: Map<string, RouteInfo>;
+    try {
+        routes = await lookupRoutes(positions);
+    } catch {
+        return;
+    }
+
+    for (const f of flights) {
+        const cs = f.callsign?.trim();
+        if (!cs) continue;
+        const r = routes.get(cs);
+        if (!r) continue;
+        if (!f.orig_iata && r.orig_iata) f.orig_iata = r.orig_iata;
+        if (!f.orig_icao && r.orig_icao) f.orig_icao = r.orig_icao;
+        if (!f.dest_iata && r.dest_iata) f.dest_iata = r.dest_iata;
+        if (!f.dest_icao && r.dest_icao) f.dest_icao = r.dest_icao;
+        if (!f.airline_icao && r.airline_icao) f.airline_icao = r.airline_icao;
+        if (!f.airline_iata && r.airline_iata) f.airline_iata = r.airline_iata;
+        if (!f.operating_as && r.airline_icao) f.operating_as = r.airline_icao;
+    }
 }

@@ -15,7 +15,10 @@ works out of the box.
 adsb.lol broadcasts raw ADS-B data and does not provide the curated metadata
 that commercial APIs derive from their own pipelines:
 
-- **No origin/destination airport** — the UI hides those fields when missing.
+- **Origin/destination** is enriched per callsign via adsb.lol's
+  `routeset` endpoint (community route DB). Coverage is good for scheduled
+  commercial flights and missing for GA/military; the UI hides those fields
+  when the route is unknown.
 - **No native flight trails** — the server keeps a short in-memory positional
   history per aircraft from successive `/api/flights` polls and serves that as
   a fallback trail. Trails reset on server restart and are short on serverless
