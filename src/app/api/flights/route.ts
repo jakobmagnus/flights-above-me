@@ -1,13 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { mockFlights } from '@/utils/mockFlightData';
 import { transformFlightData } from '@/utils/flightDataTransform';
+import {
+    getFlightProvider,
+    parseBoundsString,
+    recordTrailPositions,
+    UpstreamError,
+} from '@/utils/providers';
 
-// Helper function to return mock flights with updated timestamps
+// Helper to return mock flights with refreshed timestamps. Mock data uses the
+// FR24 encoding for vertical speed, so we run it through transformFlightData.
 function getMockFlights() {
     const currentTime = new Date().toISOString();
     const flightsWithTimestamp = mockFlights.map(flight => ({
         ...flight,
-        timestamp: currentTime
+        timestamp: currentTime,
     }));
     return transformFlightData(flightsWithTimestamp);
 }
@@ -20,75 +27,45 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Bounds parameter is required' }, { status: 400 });
     }
 
-    const API_KEY = process.env.FLIGHTRADAR24_API_KEY;
+    const parsedBounds = parseBoundsString(bounds);
+    if (!parsedBounds) {
+        return NextResponse.json({ error: 'Invalid bounds format. Expected "north,south,west,east".' }, { status: 400 });
+    }
+
     const isDevelopment = process.env.NODE_ENV === 'development';
     const mockDataExplicitlyEnabled = process.env.USE_MOCK_FLIGHT_DATA === 'true';
     const mockDataExplicitlyDisabled = process.env.USE_MOCK_FLIGHT_DATA === 'false';
-    
-    // Use mock data if explicitly enabled, or in development mode (unless explicitly disabled)
     const useMockData = mockDataExplicitlyEnabled || (isDevelopment && !mockDataExplicitlyDisabled);
-    
-    // In development, if no API key is set, use mock data
-    if (!API_KEY) {
-        console.warn("⚠️  FLIGHTRADAR24_API_KEY not configured");
-        
-        if (useMockData) {
-            console.log("📍 Using mock flight data for development");
-            return NextResponse.json(getMockFlights());
-        }
-        
-        console.error("❌ API key not configured and mock data disabled");
-        return NextResponse.json({ 
-            error: 'FLIGHTRADAR24_API_KEY environment variable is not set. Please configure it or set USE_MOCK_FLIGHT_DATA=true for development.' 
-        }, { status: 503 });
+
+    // Explicit opt-in to mock data short-circuits provider resolution.
+    if (mockDataExplicitlyEnabled) {
+        return NextResponse.json(getMockFlights());
     }
 
-    const url = `https://fr24api.flightradar24.com/api/live/flight-positions/full?bounds=${bounds}`;
+    const provider = getFlightProvider();
 
     try {
-        const frResponse = await fetch(url, {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'Accept-Version': 'v1',
-                'Authorization': `Bearer ${API_KEY}`
-            },
-            next: { revalidate: 30 }
-        });
-
-        if (!frResponse.ok) {
-            const errText = await frResponse.text();
-            console.error(`FR24 API Error: ${frResponse.status} - ${errText}`);
-            
-            // In development, fall back to mock data on API errors
-            if (useMockData) {
-                console.log("📍 Falling back to mock flight data due to API error");
-                return NextResponse.json(getMockFlights());
-            }
-            
-            return NextResponse.json(
-                { error: `Upstream API Error: ${frResponse.status}` },
-                { status: frResponse.status }
-            );
+        const flights = await provider.getFlightsInBounds(parsedBounds);
+        // Build up an in-memory trail history since adsb.lol has no native
+        // trail endpoint.
+        if (!provider.supportsTrails) {
+            recordTrailPositions(flights);
         }
-
-        const data = await frResponse.json();
-        // Transform the flight data (e.g., decode vertical speed)
-        const transformedData = Array.isArray(data) ? transformFlightData(data) : data;
-        return NextResponse.json(transformedData);
-
+        return NextResponse.json(flights);
     } catch (error) {
-        console.error("API Error:", error);
-        
-        // In development, fall back to mock data on network errors
+        const status = error instanceof UpstreamError ? error.status : 500;
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        console.error(`Flight provider (${provider.id}) error:`, message);
+
+        // In development, fall back to mock data on any upstream failure to
+        // keep the UI usable without network/API access.
         if (useMockData) {
-            console.log("📍 Falling back to mock flight data due to network error");
+            console.log('📍 Falling back to mock flight data due to upstream error');
             return NextResponse.json(getMockFlights());
         }
-        
         return NextResponse.json(
-            { error: error instanceof Error ? error.message : 'Unknown error' },
-            { status: 500 }
+            { error: error instanceof UpstreamError ? `Upstream API Error: ${status}` : message },
+            { status },
         );
     }
 }

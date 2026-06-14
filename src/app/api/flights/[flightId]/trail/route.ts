@@ -1,4 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import {
+    getCachedTrail,
+    getFlightProvider,
+    UpstreamError,
+} from '@/utils/providers';
 
 export async function GET(
     request: NextRequest,
@@ -10,43 +15,34 @@ export async function GET(
         return NextResponse.json({ error: 'Flight ID is required' }, { status: 400 });
     }
 
-    const API_KEY = process.env.FLIGHTRADAR24_API_KEY;
-
-    if (!API_KEY) {
-        console.error("API key not configured");
-        return NextResponse.json({ error: 'Service temporarily unavailable' }, { status: 503 });
-    }
-
-    const url = `https://fr24api.flightradar24.com/api/flight-tracks?flight_id=${flightId}`;
+    const provider = getFlightProvider();
 
     try {
-        const frResponse = await fetch(url, {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'Accept-Version': 'v1',
-                'Authorization': `Bearer ${API_KEY}`
-            },
-            next: { revalidate: 10 }
-        });
-
-        if (!frResponse.ok) {
-            const errText = await frResponse.text();
-            console.error(`FR24 API Error: ${frResponse.status} - ${errText}`);
+        const trail = await provider.getFlightTrail(flightId);
+        if (trail) {
+            return NextResponse.json(trail);
+        }
+    } catch (error) {
+        const status = error instanceof UpstreamError ? error.status : 500;
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        console.error(`Flight trail provider (${provider.id}) error:`, message);
+        // Don't fail outright if a cached fallback is available below.
+        if (provider.supportsTrails) {
             return NextResponse.json(
-                { error: `Upstream API Error: ${frResponse.status}` },
-                { status: frResponse.status }
+                { error: error instanceof UpstreamError ? `Upstream API Error: ${status}` : message },
+                { status },
             );
         }
-
-        const data = await frResponse.json();
-        return NextResponse.json(data);
-
-    } catch (error) {
-        console.error("API Error:", error);
-        return NextResponse.json(
-            { error: error instanceof Error ? error.message : 'Unknown error' },
-            { status: 500 }
-        );
     }
+
+    // adsb.lol has no native trail endpoint; fall back to the in-memory
+    // positional cache populated from successive bounds polls.
+    const cached = getCachedTrail(flightId);
+    if (cached) {
+        return NextResponse.json(cached);
+    }
+
+    // No trail available yet. Return an empty track set so the UI can
+    // gracefully render the live position without a polyline.
+    return NextResponse.json({ fr24_id: flightId, tracks: [] });
 }
