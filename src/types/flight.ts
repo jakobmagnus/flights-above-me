@@ -52,6 +52,7 @@ export interface Flight {
     heading?: number;
     airline_iata?: string;
     airline_icao?: string;
+    airline_name?: string;
     origin_city?: string;
     origin_airport_name?: string;
     destination_city?: string;

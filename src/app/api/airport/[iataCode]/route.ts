@@ -1,14 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AIRPORT_COORDINATES } from '@/utils/airportCoordinates';
+import type { AirportInfo } from '@/utils/airportInfo';
 
-export interface AirportInfo {
-    iata: string;
-    name: string;
-    city: string;
-    country: string;
-    lat: number;
-    lon: number;
-}
+export type { AirportInfo };
 
 // In-memory cache to reduce API calls
 // Note: This cache is per-instance and will be lost on serverless cold starts

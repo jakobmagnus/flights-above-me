@@ -244,7 +244,7 @@ export default function FlightDetail({ flight, onClose }: FlightDetailProps) {
         }
     }
 
-    const airlineName = airlineCode ? AIRLINE_NAMES[airlineCode] || airlineCode : 'Unknown Airline';
+    const airlineName = flight.airline_name || (airlineCode ? AIRLINE_NAMES[airlineCode] || airlineCode : 'Unknown Airline');
     const airlineCountry = airlineCode ? AIRLINE_COUNTRIES[airlineCode] : null;
 
     const logoUrl = airlineCode
