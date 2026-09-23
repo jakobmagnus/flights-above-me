@@ -6,6 +6,7 @@ import {
     BoundsBox,
     FlightProvider,
     ProviderId,
+    RequestValidationError,
     UpstreamError,
     isInsideBounds,
 } from './types';
@@ -56,10 +57,12 @@ export class AdsbLolProvider implements FlightProvider {
 
     async getFlightsInBounds(bounds: BoundsBox): Promise<Flight[]> {
         const center = boundsCenter(bounds);
-        const radiusNm = Math.min(
-            Math.ceil(boundsRadiusNm(bounds, center)),
-            ADSBLOL_MAX_RADIUS_NM,
-        );
+        const radiusNm = Math.ceil(boundsRadiusNm(bounds, center));
+        if (radiusNm > ADSBLOL_MAX_RADIUS_NM) {
+            throw new RequestValidationError(
+                `Bounds too large for adsb.lol point query (max ${ADSBLOL_MAX_RADIUS_NM} NM radius).`,
+            );
+        }
 
         const url = `https://api.adsb.lol/v2/point/${center.lat.toFixed(5)}/${center.lon.toFixed(5)}/${radiusNm}`;
 
@@ -190,6 +193,7 @@ function mapAircraftToFlight(ac: AdsbLolAircraft, nowIso: string): Flight {
         operating_as: airline?.icao,
         airline_icao: airline?.icao,
         airline_iata: airline?.iata,
+        airline_name: airline?.name,
 
         // Timestamps
         timestamp: nowIso,

@@ -99,6 +99,10 @@ interface RoutesetResultEntry {
 }
 
 function parseRouteResult(entry: RoutesetResultEntry): RouteInfo | null {
+    if (entry.plausible === false || entry.plausible === 0) {
+        return null;
+    }
+
     // "unknown" or missing means the route is not in the DB.
     const codes = entry.airport_codes;
     if (!codes || codes === 'unknown') return null;
@@ -142,13 +146,16 @@ function parseRouteResult(entry: RoutesetResultEntry): RouteInfo | null {
     return info;
 }
 
-async function fetchRoutesetBatch(planes: RoutesetPlane[]): Promise<Map<string, RouteInfo | null>> {
+async function fetchRoutesetBatch(
+    planes: RoutesetPlane[],
+    timeoutMs: number,
+): Promise<Map<string, RouteInfo | null>> {
     const result = new Map<string, RouteInfo | null>();
     if (planes.length === 0) return result;
 
     // Bound the request so a slow routeset response never stalls /api/flights.
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), ROUTESET_TIMEOUT_MS);
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
     let res: Response;
     try {
@@ -231,9 +238,12 @@ export async function lookupRoutes(
         toFetch.push({ callsign: cs, lat: pos.lat, lng: pos.lon });
     }
 
+    const deadline = Date.now() + ROUTESET_TIMEOUT_MS;
     for (let i = 0; i < toFetch.length; i += ROUTESET_BATCH_SIZE) {
+        const remainingMs = deadline - Date.now();
+        if (remainingMs <= 0) break;
         const batch = toFetch.slice(i, i + ROUTESET_BATCH_SIZE);
-        const results = await fetchRoutesetBatch(batch);
+        const results = await fetchRoutesetBatch(batch, remainingMs);
         for (const plane of batch) {
             const info = results.get(plane.callsign) ?? null;
             if (info) {

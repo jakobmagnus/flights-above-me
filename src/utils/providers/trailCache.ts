@@ -75,6 +75,10 @@ export function recordTrailPositions(flights: Flight[]): void {
 /** Retrieve the cached trail for a flight id, or null if unknown. */
 export function getCachedTrail(flightId: string): FlightTrackResponse | null {
     const entry = cache.get(flightId);
+    if (entry && Date.now() - entry.lastSeen > ENTRY_TTL_MS) {
+        cache.delete(flightId);
+        return null;
+    }
     if (!entry || entry.points.length === 0) return null;
     return {
         fr24_id: flightId,

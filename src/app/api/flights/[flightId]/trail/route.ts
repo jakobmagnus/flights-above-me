@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
-    getCachedTrail,
     getFlightProvider,
     UpstreamError,
 } from '@/utils/providers';
@@ -35,14 +34,7 @@ export async function GET(
         }
     }
 
-    // adsb.lol has no native trail endpoint; fall back to the in-memory
-    // positional cache populated from successive bounds polls.
-    const cached = getCachedTrail(flightId);
-    if (cached) {
-        return NextResponse.json(cached);
-    }
-
-    // No trail available yet. Return an empty track set so the UI can
-    // gracefully render the live position without a polyline.
+    // No trail available from this provider. Return an empty track set so the
+    // UI can gracefully render the live position without a polyline.
     return NextResponse.json({ fr24_id: flightId, tracks: [] });
 }

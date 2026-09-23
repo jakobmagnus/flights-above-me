@@ -1,7 +1,12 @@
 import { AdsbLolProvider } from './adsbLolProvider';
 import { FlightProvider } from './types';
 
-export { UpstreamError, parseBoundsString, isInsideBounds } from './types';
+export {
+    UpstreamError,
+    RequestValidationError,
+    parseBoundsString,
+    isInsideBounds,
+} from './types';
 export type { FlightProvider, ProviderId, BoundsBox } from './types';
 export { recordTrailPositions, getCachedTrail } from './trailCache';
 

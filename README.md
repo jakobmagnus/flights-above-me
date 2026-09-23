@@ -17,12 +17,10 @@ that commercial APIs derive from their own pipelines:
 
 - **Origin/destination** is enriched per callsign via adsb.lol's
   `routeset` endpoint (community route DB). Coverage is good for scheduled
-  commercial flights and missing for GA/military; the UI hides those fields
-  when the route is unknown.
-- **No native flight trails** — the server keeps a short in-memory positional
-  history per aircraft from successive `/api/flights` polls and serves that as
-  a fallback trail. Trails reset on server restart and are short on serverless
-  cold starts.
+  commercial flights and missing for GA/military; unknown routes are shown as
+  placeholders in the UI.
+- **No native flight trails** — adsb.lol does not expose per-flight historical
+  track history in the format used by this app.
 - **Airline name** is best-effort, derived from the callsign prefix via a
   built-in ICAO-to-airline lookup (`src/utils/providers/airlineCodes.ts`).
 - Coverage depends on the community receiver network; expect gaps over oceans

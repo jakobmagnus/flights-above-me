@@ -4,7 +4,7 @@ import { transformFlightData } from '@/utils/flightDataTransform';
 import {
     getFlightProvider,
     parseBoundsString,
-    recordTrailPositions,
+    RequestValidationError,
     UpstreamError,
 } from '@/utils/providers';
 
@@ -46,14 +46,11 @@ export async function GET(request: NextRequest) {
 
     try {
         const flights = await provider.getFlightsInBounds(parsedBounds);
-        // Build up an in-memory trail history since adsb.lol has no native
-        // trail endpoint.
-        if (!provider.supportsTrails) {
-            recordTrailPositions(flights);
-        }
         return NextResponse.json(flights);
     } catch (error) {
-        const status = error instanceof UpstreamError ? error.status : 500;
+        const status = error instanceof UpstreamError || error instanceof RequestValidationError
+            ? error.status
+            : 500;
         const message = error instanceof Error ? error.message : 'Unknown error';
         console.error(`Flight provider (${provider.id}) error:`, message);
 
@@ -64,7 +61,11 @@ export async function GET(request: NextRequest) {
             return NextResponse.json(getMockFlights());
         }
         return NextResponse.json(
-            { error: error instanceof UpstreamError ? `Upstream API Error: ${status}` : message },
+            {
+                error: error instanceof UpstreamError
+                    ? `Upstream API Error: ${status}`
+                    : message,
+            },
             { status },
         );
     }

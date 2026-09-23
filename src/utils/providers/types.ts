@@ -52,6 +52,17 @@ export class UpstreamError extends Error {
 }
 
 /**
+ * Error used when client input is syntactically valid but outside supported
+ * constraints for a provider/query shape.
+ */
+export class RequestValidationError extends Error {
+    constructor(message: string, public readonly status: number = 400) {
+        super(message);
+        this.name = 'RequestValidationError';
+    }
+}
+
+/**
  * Parse a "north,south,west,east" bounds string into a {@link BoundsBox}.
  * Returns `null` if the string is malformed.
  */
@@ -61,6 +72,15 @@ export function parseBoundsString(bounds: string): BoundsBox | null {
         return null;
     }
     const [north, south, west, east] = parts;
+    if (north < -90 || north > 90 || south < -90 || south > 90) {
+        return null;
+    }
+    if (west < -180 || west > 180 || east < -180 || east > 180) {
+        return null;
+    }
+    if (north < south) {
+        return null;
+    }
     return { north, south, west, east };
 }
 
