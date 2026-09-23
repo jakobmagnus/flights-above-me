@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { leafletLayer } from 'protomaps-leaflet';
 import { Flight, FlightTrackPoint } from '@/types/flight';
 import { useTheme } from './ThemeProvider';
 
@@ -15,25 +16,16 @@ interface FlightMapProps {
     onBoundsChange?: (bounds: string) => void;
 }
 
-const DARK_TILES = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-const LIGHT_TILES = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+const BASEMAP_URL = process.env.NEXT_PUBLIC_BASEMAP_PMTILES_URL;
 
 export default function FlightMap({ userLat, userLon, flights, onFlightSelect, selectedFlight, onBoundsChange }: FlightMapProps) {
     const mapRef = useRef<L.Map | null>(null);
-    const tileLayerRef = useRef<L.TileLayer | null>(null);
     const markersRef = useRef<Map<string, L.Marker>>(new Map()); // Changed to Map for efficient lookups
     const trailRef = useRef<L.Polyline | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [flightTrail, setFlightTrail] = useState<FlightTrackPoint[]>([]);
     const onBoundsChangeRef = useRef(onBoundsChange);
     const { resolvedTheme } = useTheme();
-    const resolvedThemeRef = useRef(resolvedTheme);
-
-    // Keep resolvedTheme ref updated so the init effect can read the latest value
-    // without depending on it (which would otherwise tear down and rebuild the map).
-    useEffect(() => {
-        resolvedThemeRef.current = resolvedTheme;
-    }, [resolvedTheme]);
 
     // Keep the ref updated
     useEffect(() => {
@@ -150,14 +142,10 @@ export default function FlightMap({ userLat, userLon, flights, onFlightSelect, s
         const map = L.map(containerRef.current, {
             center: [userLat, userLon],
             zoom: 10,
+            minZoom: 0,
+            maxZoom: 19,
             zoomControl: true
         });
-
-        const tileLayer = L.tileLayer(resolvedThemeRef.current === 'light' ? LIGHT_TILES : DARK_TILES, {
-            attribution: '&copy; OpenStreetMap &copy; CARTO',
-            maxZoom: 19
-        }).addTo(map);
-        tileLayerRef.current = tileLayer;
 
         L.circleMarker([userLat, userLon], {
             color: '#3388ff',
@@ -224,12 +212,25 @@ export default function FlightMap({ userLat, userLon, flights, onFlightSelect, s
         }
     }, [userLat, userLon]);
 
-    // Swap tile layer URL when the resolved theme changes
+    // Replace only the basemap when the theme or map instance changes.
     useEffect(() => {
-        if (tileLayerRef.current) {
-            tileLayerRef.current.setUrl(resolvedTheme === 'light' ? LIGHT_TILES : DARK_TILES);
-        }
-    }, [resolvedTheme]);
+        const map = mapRef.current;
+        if (!map || !BASEMAP_URL) return;
+
+        const basemap = leafletLayer({
+            url: BASEMAP_URL,
+            flavor: resolvedTheme,
+            lang: 'en',
+            maxDataZoom: 15,
+            maxZoom: 19
+        }).addTo(map);
+
+        return () => {
+            if (map.hasLayer(basemap)) {
+                map.removeLayer(basemap);
+            }
+        };
+    }, [resolvedTheme, userLat, userLon]);
 
     // Update markers when flights change - optimized with delta updates
     useEffect(() => {
@@ -352,7 +353,14 @@ export default function FlightMap({ userLat, userLon, flights, onFlightSelect, s
                     border: none !important;
                 }
             `}</style>
-            <div ref={containerRef} className="w-full h-full" />
+            <div className="relative w-full h-full">
+                <div ref={containerRef} className="w-full h-full" />
+                {!BASEMAP_URL && (
+                    <div role="status" className="absolute bottom-8 left-4 right-4 z-[1000] rounded bg-white p-3 text-sm text-gray-900 shadow dark:bg-gray-900 dark:text-white">
+                        Map setup required: set NEXT_PUBLIC_BASEMAP_PMTILES_URL to your hosted Protomaps archive and rebuild the app. No map API key is needed.
+                    </div>
+                )}
+            </div>
         </>
     );
 }
